@@ -19,6 +19,7 @@ from io import BytesIO
 def execute(self,*args, **kwargs):
     filename, file_extension = os.path.splitext(self.input_path)
     outfilename =filename+'_'+str(uuid4())+file_extension
+    outfilename = outfilename.translate(str.maketrans('','_',"-"))
     print(outfilename)
     pm.execute_notebook(self.input_path,outfilename,parameters=kwargs)
 
