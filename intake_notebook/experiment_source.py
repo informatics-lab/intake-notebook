@@ -57,7 +57,7 @@ class ExperimentSource(DataSource):
             npartitions=len(self.params.shape),
             #extra_metadata=dict(c=3, d=4)
         )
-     """get the paramerters and populate the catalogue entry.
+    """get the paramerters and populate the catalogue entry.
 
         returns : pandas dataframe of concatinated param files
     """   

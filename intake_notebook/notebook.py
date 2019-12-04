@@ -108,7 +108,7 @@ class Notebook:
     def patch(self):
         ex = create_function( self.ex_function,execute,doc=self.doc)
         self.execute =types.MethodType(ex, self)
-        print(os.path.splitext(os.path.basename(self.input_path)))
+        print('%s.%s' %(os.path.splitext(os.path.basename(self.input_path))[0],self.ex_function))
         print(self.execute.__doc__)
  
 
