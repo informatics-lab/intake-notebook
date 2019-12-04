@@ -4,6 +4,7 @@ from papermill.iorw import load_notebook_node, write_ipynb, get_pretty_path, loc
 import copy
 import nbformat
 import ast
+import json
 
 
 from papermill.iorw import load_notebook_node
@@ -16,10 +17,22 @@ import os
 import tokenize
 from io import BytesIO
 
+"""basic execution function to be monkey patched
+   calls papermill execute.
+   parameters
+   ----------
+   *args: function arguments
+   **kwargs: keywords to be passed to papermill
+"""
 def execute(self,*args, **kwargs):
     filename, file_extension = os.path.splitext(self.input_path)
-    outfilename =filename+'_'+str(uuid4())+file_extension
-    outfilename = outfilename.translate(str.maketrans("-","_"))
+    filename = os.path.basename(filename)
+    uuid = str(uuid4()).translate(str.maketrans("-","_"))
+    os.makedirs(uuid, exist_ok=True)
+    outfilename =os.path.join(uuid,filename+file_extension)
+    kwargs['output_path'] = uuid + '/'
+    with open(kwargs['output_path']+'params.json', 'w') as f:
+        json.dump(kwargs, f)
     print(outfilename)
     pm.execute_notebook(self.input_path,outfilename,parameters=kwargs)
 
@@ -44,6 +57,12 @@ class Notebook:
     engine_kwargs = None
     ex_function = 'execute(self)'
     doc =''
+    """Notebook class.
+
+    Parameters
+    ----------
+    notebook_path : path to notebook to handle
+    """
     def __init__(self,notebook_path):
         self.input_path = notebook_path
     def _find_first_tagged_cell_index(self,nb,tag):
@@ -54,6 +73,8 @@ class Notebook:
         if not parameters_indices:
             return -1
         return parameters_indices[0]
+    """get the parameters and make a function header
+    """       
     def get_params(self):
         def process_node(node):
             valnode = node.value
@@ -76,23 +97,34 @@ class Notebook:
             for tok in tokenize.tokenize(BytesIO(s.encode('utf-8')).readline):
                 if tok.type==3 and tok.string.startswith("'''"):
                     self.doc = tok.string.translate(str.maketrans('','',"'"))
-            print(self.doc)
             a = ast.parse(nb.cells[index].source)
             output =[process_node(node) for node in ast.walk(a) if isinstance(node, ast.Assign)]
             self.params =dict(ChainMap(*output))
             if len(self.params)>0:
                 self.ex_function ='execute(self,'+', '.join("{!s}={!r}".format(key,val) for (key,val) in  self.params.items())+')'
         return self.params
+    """Patch execute function with parsed details
+    """           
     def patch(self):
         ex = create_function( self.ex_function,execute,doc=self.doc)
         self.execute =types.MethodType(ex, self)
+        print(os.path.splitext(os.path.basename(self.input_path)))
+        print(self.execute.__doc__)
  
 
 class Notebooks:
     books = dict()
     input_paths =None
+    """Notebooks class. holds multiple notebooks
+
+    Parameters
+    ----------
+    notebook_path : list of paths of notebook to handle
+    """
     def __init__(self,notebook_path):
         self.input_paths = notebook_path
+    """read the notebooks and patch the execute funtions
+    """        
     def read(self):
         self.books = None
         self.books = dict()

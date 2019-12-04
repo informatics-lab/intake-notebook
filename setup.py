@@ -24,7 +24,8 @@ setup(
     packages=find_packages(),
     entry_points={
         'intake.drivers': [
-            'intake_notebook = intake_notebook.notebook_source:NotebookSource'
+            'notebook = intake_notebook.notebook_source:NotebookSource',
+            'experiment = intake_notebook.experiment_source:ExperimentSource',
         ]
     },
     package_data={'': ['*.csv', '*.yml', '*.html']},
