@@ -9,7 +9,7 @@
 from setuptools import setup, find_packages
 import versioneer
 
-INSTALL_REQUIRES = ['intake >=0.5.2']
+INSTALL_REQUIRES = ['intake >=0.5.2','makefun>=1.7.0','intake-xarray>=0.3.1','papermill>=1.2.1']
 
 setup(
     name='intake-notebook',
